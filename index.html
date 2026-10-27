@@ -1,0 +1,347 @@
+<title>Telltale</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap">
+<style>
+/* Layout: a bench. Code goes in on the left, the reading comes out on the right as a human-to-AI scale with its evidence beneath. */
+:root {
+  --paper: #eef0f4;       /* cool grey with a blue lean */
+  --panel: #f9fafc;
+  --ink: #141a2e;
+  --ink-2: #4b5470;
+  --rule: #d3d8e3;
+  --signal: #2f43d9;      /* instrument ultramarine: the needle and focus */
+  --human: #1f7a5a;
+  --ai: #b3402a;
+  --display: "Bricolage Grotesque", "Helvetica Neue", Arial, sans-serif;
+  --body: "IBM Plex Sans", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0f1320; --panel: #171c2d; --ink: #e8ebf5; --ink-2: #99a2bd; --rule: #2a3149;
+    --signal: #8c9bff; --human: #4fc79a; --ai: #ff8a70; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #0f1320; --panel: #171c2d; --ink: #e8ebf5; --ink-2: #99a2bd; --rule: #2a3149;
+  --signal: #8c9bff; --human: #4fc79a; --ai: #ff8a70; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--paper); color: var(--ink); font: 15px/1.55 var(--body); padding-block: 28px 40px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.wrap { max-width: 1120px; margin: 0 auto; display: grid; gap: 22px; }
+header { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 24px; }
+h1 { font: 700 34px/1 var(--display); letter-spacing: -0.02em; margin: 0; }
+header p { margin: 0; color: var(--ink-2); max-width: 52ch; }
+.bench { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 820px) { .bench { grid-template-columns: minmax(0, 1fr); } }
+.card { background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; }
+.in-bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 10px 12px; border-bottom: 1px solid var(--rule); }
+.in-bar span { font: 500 11px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-2); margin-right: auto; }
+select, button { font: 500 13px var(--body); color: var(--ink); background: var(--paper); border: 1px solid var(--rule); border-radius: 4px; padding: 6px 10px; cursor: pointer; }
+button:hover, select:hover { border-color: var(--signal); }
+:focus-visible { outline: 2px solid var(--signal); outline-offset: 2px; }
+textarea { display: block; width: 100%; min-height: 420px; resize: vertical; border: 0; background: transparent; color: var(--ink); font: 400 13px/1.6 var(--mono); padding: 14px; tab-size: 4; white-space: pre; overflow: auto; }
+textarea:focus-visible { outline-offset: -3px; }
+.out { padding: 20px; display: grid; gap: 20px; }
+.read { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+.pct { font: 700 76px/0.9 var(--display); letter-spacing: -0.04em; font-variant-numeric: tabular-nums; }
+.verdict { font: 500 20px var(--display); }
+.sub { color: var(--ink-2); font-size: 13px; margin: 2px 0 0; }
+.scale { position: relative; padding-top: 22px; }
+.track { height: 12px; border-radius: 2px; background: linear-gradient(90deg, var(--human), var(--rule) 50%, var(--ai)); opacity: .9; }
+.ticks { position: absolute; left: 0; right: 0; top: 22px; height: 12px; background: repeating-linear-gradient(90deg, var(--panel) 0 1px, transparent 1px 10%); }
+.needle { position: absolute; top: 12px; width: 0; height: 36px; border-left: 3px solid var(--ink); transition: left .35s ease; }
+.needle::before { content: ""; position: absolute; top: -6px; left: -7px; border: 5px solid transparent; border-top: 7px solid var(--ink); }
+.ends { display: flex; justify-content: space-between; margin-top: 8px; font: 500 11px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-2); }
+h2 { font: 500 11px var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--ink-2); margin: 0 0 8px; }
+.ev { list-style: none; margin: 0; padding: 0; display: grid; gap: 7px; }
+.ev li { display: grid; grid-template-columns: 1fr 120px; gap: 12px; align-items: center; font-size: 14px; }
+.bar { height: 8px; background: var(--rule); border-radius: 1px; position: relative; }
+.bar i { position: absolute; top: 0; bottom: 0; background: var(--ai); }
+.bar i.h { background: var(--human); }
+.bar::after { content: ""; position: absolute; left: 50%; top: -3px; bottom: -3px; border-left: 1px solid var(--ink-2); }
+.note { border-top: 1px solid var(--rule); padding-top: 14px; color: var(--ink-2); font-size: 13px; margin: 0; }
+.warn { background: color-mix(in srgb, var(--ai) 12%, var(--panel)); border: 1px solid color-mix(in srgb, var(--ai) 35%, var(--rule)); padding: 8px 10px; border-radius: 4px; font-size: 13px; }
+footer { color: var(--ink-2); font-size: 13px; max-width: 78ch; }
+footer b { color: var(--ink); font-weight: 500; font-variant-numeric: tabular-nums; }
+@media (prefers-reduced-motion: reduce) { .needle { transition: none; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Telltale</h1>
+    <p>Paste code in any language. Telltale reads how it was written and says whether it looks closer to human work from before 2020 or to output from today's AI models.</p>
+  </header>
+
+  <div class="bench">
+    <section class="card" aria-label="Code input">
+      <div class="in-bar">
+        <span>Code in</span>
+        <label for="lang" class="sr" style="position:absolute;left:-9999px">Language</label>
+        <select id="lang">
+          <option value="">Auto-detect language</option>
+          <option>py</option><option>js</option><option>ts</option><option>java</option><option>go</option><option>rs</option>
+          <option>c</option><option>cpp</option><option>cs</option><option>rb</option><option>php</option><option>kt</option><option>swift</option>
+        </select>
+        <button id="s-human" type="button">Example: Go, 2019</button>
+        <button id="s-ai" type="button">Example: AI answer</button>
+      </div>
+      <textarea id="code" spellcheck="false" aria-label="Paste code here"></textarea>
+    </section>
+
+    <section class="card out" aria-label="Reading" aria-live="polite">
+      <div>
+        <div class="read"><div class="pct" id="pct">0%</div><div><div class="verdict" id="verdict"></div><p class="sub" id="sub"></p></div></div>
+      </div>
+      <div>
+        <div class="scale"><div class="track"></div><div class="ticks"></div><div class="needle" id="needle"></div></div>
+        <div class="ends"><span>Human</span><span>AI</span></div>
+      </div>
+      <div id="warn" class="warn" hidden></div>
+      <div><h2>What moved the needle</h2><ul class="ev" id="ev"></ul></div>
+      <p class="note" id="note"></p>
+    </section>
+  </div>
+
+  <footer id="foot"></footer>
+</div>
+
+<script>/* aicodedetect core: language-agnostic stylometry. Runs in node (training) and the browser (the page).
+   One source of truth: the trained model is fitted on the exact features this file computes. */
+(function (root) {
+  const LINE = {
+    py: ['#'], rb: ['#'], sh: ['#'], yml: ['#'], yaml: ['#'], toml: ['#'], r: ['#'], pl: ['#'],
+    js: ['//'], jsx: ['//'], ts: ['//'], tsx: ['//'], java: ['//'], c: ['//'], cpp: ['//'], cc: ['//'], h: ['//'], hpp: ['//'],
+    cs: ['//'], go: ['//'], rs: ['//'], swift: ['//'], kt: ['//'], scala: ['//'], dart: ['//'], php: ['//', '#'],
+    sql: ['--'], lua: ['--'], hs: ['--'], vb: ["'"],
+  };
+  const EXT_ALIAS = { javascript: 'js', typescript: 'ts', python: 'py', csharp: 'cs', ruby: 'rb', rust: 'rs', kotlin: 'kt', golang: 'go', 'c++': 'cpp', mjs: 'js', cjs: 'js' };
+  const NOSEMI = new Set(['py', 'rb', 'go', 'kt', 'swift', 'lua', 'sh', 'hs', 'yml', 'yaml', 'toml', 'sql', 'rs']);
+
+  const RESTATING = /^(initiali[sz]e|init|create|define|set up|setup|loop (through|over)|iterate|return|check (if|whether|for)|get|calculate|compute|convert|handle|validate|ensure|import|helper|main|example|test|print|append|add|update|parse|process|store|save|load|open|close|apply|extract|filter|sort|step \d+|first|next|finally|then|if|else|for|while|increment|decrement|declare|call|use|find|remove|check|build|read|write|split|join|iterate)\b/i;
+  const AI_PHRASES = /\b(here'?s|here is|note that|let'?s|certainly|sure,|of course|as an ai|robust|comprehensive|seamless(ly)?|leverage[sd]?|utili[sz]e[sd]?|gracefully|ensures? that|best practices?|edge cases?|under the hood|for simplicity|real[- ]world|production[- ]ready|self[- ]contained|this (function|method|class|script|module|program|code) (will|is|provides|takes|returns|implements|demonstrates)|example usage|time complexity|space complexity|o\(\w+\))/gi;
+  const HUMAN_MARKERS = /\b(todo|fixme|hack|xxx|wtf|idk|ugh|kludge|workaround|lol|why does|this sucks|no idea|doesn'?t work|works on my|bug|broken|temporary|for now)\b/gi;
+  const EMOJI = /[\u{1F300}-\u{1FAFF}\u2600-\u27BF\u2705\u274C\u2713\u2717\u26A0]/u;
+  const FUNC_DEF = /(^|\s)(def|fn|func|function|fun|sub)\s+[A-Za-z_]\w*|\b(public|private|protected|static|internal)\b[^\n;{=]*\w+\s*\([^)]*\)\s*(\{|:|throws)|^\s*[A-Za-z_][\w:<>,\*&\s\[\]]*\s+\**[A-Za-z_]\w*\s*\([^;)]*\)\s*\{?\s*$/gm;
+  const KEYWORDS = new Set(('if else elif for while return def class import from as in is not and or try except finally with lambda pass break continue none true false self this null nil undefined ' +
+    'function const let var new async await yield raise print public private protected static void int str bool float string len range fn func fun use mod pub impl struct enum interface package ' +
+    'namespace using extends implements override final abstract switch case default do throw throws catch char long double byte short unsigned signed auto template typename include define ' +
+    'end then begin elsif unless puts require module self end def').split(' '));
+  const GENERIC = new Set(['data', 'result', 'results', 'value', 'values', 'item', 'items', 'temp', 'output', 'response', 'input', 'obj', 'list', 'array', 'map']);
+
+  const safe = (a, b) => (b ? a / b : 0);
+  const mean = (a) => (a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0);
+  const sd = (a) => { if (a.length < 2) return 0; const m = mean(a); return Math.sqrt(mean(a.map((x) => (x - m) ** 2))); };
+  const clamp01 = (x) => Math.max(0, Math.min(1, x));
+
+  function normLang(l) { l = (l || '').toLowerCase().replace(/^\./, ''); return EXT_ALIAS[l] || l; }
+
+  function detectLang(src) {
+    const t = src;
+    if (/^\s*(def |class \w+(\(.*\))?:|import \w+$|from \w+ import|if __name__)/m.test(t) && !/[;{}]\s*$/m.test(t)) return 'py';
+    if (/\bfn \w+\(.*\)|let mut |impl\b|println!/.test(t)) return 'rs';
+    if (/^package \w+|\bfunc \w+\(|:= /m.test(t) && /\bfunc\b/.test(t)) return 'go';
+    if (/<\?php|\$\w+\s*=/.test(t)) return 'php';
+    if (/\bfun \w+\(|\bval \w+/.test(t)) return 'kt';
+    if (/\bnamespace \w+|\busing System|Console\.Write|\bstring\[\]/.test(t)) return 'cs';
+    if (/\bpublic (static )?(class|void|int)|System\.out|import java\./.test(t)) return 'java';
+    if (/#include\s*[<"]|\bstd::|cout\s*<</.test(t)) return /std::|cout|class |template/.test(t) ? 'cpp' : 'c';
+    if (/\blet \w+: |\binterface \w+|: (string|number|boolean)\b/.test(t)) return 'ts';
+    if (/\bfunc \w+\(.*\) ->|\bvar \w+: |\bimport (Foundation|UIKit|SwiftUI)/.test(t)) return 'swift';
+    if (/\bdef \w+|\bend$|puts |attr_accessor/m.test(t)) return 'rb';
+    if (/\b(const|let|var) |=> |function\s*\(|console\./.test(t)) return 'js';
+    return 'txt';
+  }
+
+  function stripBlockComments(src, lang) {
+    // returns {code, blocks[]} where blocks are doc/block comment bodies
+    const blocks = [];
+    let code = src;
+    if (lang === 'py') {
+      code = code.replace(/("""|''')([\s\S]*?)\1/g, (m, q, body) => { blocks.push(body); return '"S"'; });
+    } else if (lang === 'rb') {
+      code = code.replace(/^=begin[\s\S]*?^=end/gm, (m) => { blocks.push(m); return ''; });
+    } else if (!['sh', 'yml', 'yaml', 'toml', 'sql', 'lua', 'hs'].includes(lang)) {
+      code = code.replace(/\/\*([\s\S]*?)\*\//g, (m, body) => { blocks.push(body); return ''; });
+    }
+    return { code, blocks };
+  }
+
+  function features(srcIn, langIn) {
+    const src = srcIn.replace(/\r\n/g, '\n');
+    const lang = normLang(langIn) && LINE[normLang(langIn)] ? normLang(langIn) : (normLang(langIn) && normLang(langIn) !== 'txt' ? normLang(langIn) : detectLang(src));
+    const markers = LINE[lang] || ['//', '#'];
+    const { code: noBlocks, blocks } = stripBlockComments(src, lang);
+    const lines = src.split('\n');
+    if (lines.length && lines[lines.length - 1] === '') lines.pop();
+
+    const comments = [];
+    const codeLines = [];
+    let inline = 0;
+    for (const raw of noBlocks.split('\n')) {
+      const s = raw.trim();
+      if (!s) continue;
+      const m = markers.find((k) => s.startsWith(k));
+      if (m && !(m === '#' && /^#(include|define|if|ifdef|ifndef|endif|pragma|import)\b/.test(s)) && !(m === '#' && lang === 'php' && s.startsWith('#['))) {
+        comments.push(s.replace(/^(\/\/\/?|\/\/!|#!?|--)\s*/, ''));
+      } else {
+        codeLines.push(raw);
+        if (markers.some((k) => new RegExp('\\s' + k.replace(/[/#]/g, '\\$&') + '\\s\\S').test(raw)) && !/["'`]/.test(raw)) inline++;
+      }
+    }
+    for (const b of blocks) comments.push(...b.split('\n').map((x) => x.replace(/^\s*\*?\s?/, '').trim()).filter(Boolean));
+    const nCode = Math.max(codeLines.length, 1);
+    const f = {};
+    f.log_lines = Math.log(1 + lines.length);
+    f.comment_ratio = Math.min(safe(comments.length, nCode), 2);
+    f.inline_comment_ratio = safe(inline, nCode);
+    f.restating_ratio = safe(comments.filter((c) => RESTATING.test(c)).length, Math.max(comments.length, 1));
+    f.comment_capitalized = safe(comments.filter((c) => /^[A-Z]/.test(c)).length, Math.max(comments.length, 1));
+    f.comment_period = safe(comments.filter((c) => /\.$/.test(c)).length, Math.max(comments.length, 1));
+    f.dividers = comments.some((c) => /^[=\-_*#~]{4,}/.test(c)) ? 1 : 0;
+    f.step_comments = comments.filter((c) => /^step\s*\d+/i.test(c)).length >= 2 ? 1 : 0;
+    f.no_comments = comments.length === 0 ? 1 : 0;
+    f.ai_phrases = Math.min((src.match(AI_PHRASES) || []).length, 6) / 6;
+    f.human_markers = Math.min((src.match(HUMAN_MARKERS) || []).length, 3) / 3;
+    f.emoji = EMOJI.test(src) ? 1 : 0;
+    f.em_dash = src.includes('\u2014') ? 1 : 0;
+    f.non_ascii = /[^\x00-\x7f]/.test(src) ? 1 : 0;
+    const commentedCode = lines.filter((l) => /^\s*(#|\/\/)\s*(print|console\.log|import |def |if |for |return |self\.|this\.|\w+\s*=\s*\S|\w+\(.*\);?$|\})/.test(l)).length;
+    f.commented_code = Math.min(commentedCode, 3) / 3;
+    f.debug_prints = Math.min((src.match(/\b(print\(|println!?\(|console\.(log|error)\(|System\.out\.print|fmt\.Print|printf\(|cout\s*<<|puts |echo |Console\.Write)/g) || []).length, 6) / 6;
+
+    // Doc coverage: doc blocks vs function definitions.
+    const funcs = (src.match(FUNC_DEF) || []).length;
+    const docs = blocks.length + lines.filter((l) => /^\s*(\/\/\/|##|--\s*\|)/.test(l)).length;
+    f.doc_coverage = funcs ? Math.min(docs / funcs, 1) : (docs ? 1 : 0);
+    f.doc_tags = (src.match(/(@param|@returns?|@throws|:param|:return|Args:|Returns:|Raises:|Parameters:|\\param|\\return|# Arguments|# Returns)/g) || []).length >= 2 ? 1 : 0;
+    f.func_count = Math.log(1 + funcs);
+    const tryN = (src.match(/\b(try|begin|rescue|catch)\b/g) || []).length;
+    f.try_per_func = Math.min(safe(tryN, Math.max(funcs, 1)), 2);
+    f.broad_catch = /(except\s+(Exception|BaseException)|except\s*:|catch\s*\(\s*(final\s+)?(Exception|Throwable|\w*\s*\.\.\.)|catch\s*\(\s*\w+\s*\)|rescue\s*(=>|StandardError|$)|catch\s*\(e\))/.test(src) ? 1 : 0;
+    f.main_guard = /(__name__\s*==|\bfunc main\(|\bfn main\(|static void main|int main\(|static void Main|\bmain\(\)\s*\{|require\.main\s*===|\bmodule\.exports\b)/.test(src) ? 1 : 0;
+    f.error_strings = Math.min((src.match(/["'`](Error|Invalid|Failed|Cannot|Unable|Expected|Missing|Unexpected)[^"'`]{4,}/g) || []).length, 4) / 4;
+    f.type_annotations = lang === 'py' ? (/def \w+\([^)]*:\s*\w/.test(src) || /\)\s*->\s*\w/.test(src) ? 1 : 0) : (['ts', 'tsx', 'kt', 'swift', 'rs', 'go', 'java', 'cs'].includes(lang) ? 1 : 0);
+    f.py_hints = lang === 'py' ? (/def \w+\([^)]*:\s*\w[^)]*\)\s*->/.test(src) ? 1 : 0) : 0;
+    f.try_exc_msg = /(\$\{error|f"[^"]*\{e\}|"\s*\+\s*e\b|err\.Error\(\)|\{error\}|\{e\})/.test(src) ? 1 : 0;
+
+    // Layout.
+    const nb = lines.filter((l) => l.trim());
+    const lens = nb.map((l) => l.replace(/\s+$/, '').length);
+    f.line_len_cv = nb.length > 3 ? safe(sd(lens), mean(lens)) : 0.7;
+    f.line_len_mean = Math.min(mean(lens), 120) / 120;
+    f.max_line_over100 = lens.some((x) => x > 100) ? 1 : 0;
+    f.trailing_ws = Math.min(safe(lines.filter((l) => l !== l.replace(/\s+$/, '')).length, Math.max(lines.length, 1)) * 10, 1);
+    f.tab_indent = lines.some((l) => l.startsWith('\t')) ? 1 : 0;
+    f.tab_space_mix = f.tab_indent && lines.some((l) => /^ {2,}\S/.test(l)) ? 1 : 0;
+    f.blank_ratio = safe(lines.length - nb.length, Math.max(lines.length, 1));
+    f.double_quotes = (() => { const d = (src.match(/"/g) || []).length, s = (src.match(/'/g) || []).length; return d + s ? d / (d + s) : 0.5; })();
+    f.allman_brace = /^\s*\{\s*$/m.test(src) ? 1 : 0;
+    const indents = nb.map((l) => (l.match(/^[ ]*/) || [''])[0].length).filter((x) => x > 0);
+    f.indent4 = indents.length ? safe(indents.filter((x) => x % 4 === 0).length, indents.length) : 0.5;
+    f.indent2 = indents.length ? safe(indents.filter((x) => x % 2 === 0).length, indents.length) : 0.5;
+
+    // Spacing discipline.
+    let body = codeLines.map((l) => l.replace(/"(\\.|[^"\\])*"|'(\\.|[^'\\])*'|`[^`]*`/g, 'S')).join('\n');
+    body = body.replace(/\(([^()]*)\)/g, (m) => m.replace(/(\w)=(?!=)(\S)/g, '$1 KW $2'));
+    body = body.replace(/->|=>|\+\+|--|<<|>>|::|\*\*|\/\*|\*\/|<\w[\w<>, ]*>|#include\s*<[^>]*>/g, ' ').replace(/\*,|\/,/g, ' ,');
+    const ops = (body.match(/\w\s?(==|!=|<=|>=|[=+*\/<>])\s?\w/g) || []).length || 1;
+    const tight = (body.match(/\w(==|!=|<=|>=|[=+*\/<>])\w|\w(==|!=|<=|>=|[=+*\/<>]) \w|\w (==|!=|<=|>=|[=+*\/<>])\w/g) || []).length;
+    f.sloppy_spacing = /\w[=+*\/<>]\w|,\S/.test(body) ? Math.min(safe(tight, ops) * 2, 1) : 0;
+    f.comma_nospace = /,[^\s)\]}\n]/.test(body) ? 1 : 0;
+    f.spaced_ops = /\w \S{1,2} \w/.test(body) && !f.sloppy_spacing && !f.comma_nospace ? 1 : 0;
+    f.semicolon_stack = !NOSEMI.has(lang) && /;\s*\w[^;\n]*;/.test(body) && !/for\s*\(/.test(body) ? 1 : 0;
+    f.oneliner_block = /^[ \t]*(if|for|while|elif|else)\b[^\n{]*[:)][ \t]*[^\s#{][^\n]*$/m.test(body) ? 1 : 0;
+    f.semis_present = NOSEMI.has(lang) ? 0 : safe(codeLines.filter((l) => /;\s*$/.test(l)).length, nCode);
+
+    // Identifiers.
+    const idents = (codeLines.join('\n').replace(/"(\\.|[^"\\])*"|'(\\.|[^'\\])*'/g, ' ').match(/\b[A-Za-z_][A-Za-z0-9_]*\b/g) || []).filter((i) => !KEYWORDS.has(i.toLowerCase()));
+    const names = new Set(idents);
+    f.ident_len_mean = Math.min(mean(idents.map((i) => i.length)), 20) / 20;
+    f.single_letter = Math.min(safe(idents.filter((i) => i.length === 1).length, Math.max(idents.length, 1)) * 5, 1);
+    const snake = [...names].filter((n) => /^[a-z][a-z0-9]*(_[a-z0-9]+)+$/.test(n)).length;
+    const camel = [...names].filter((n) => /^[a-z]+([A-Z][a-z0-9]*)+$/.test(n)).length;
+    f.naming_mixed = snake >= 2 && camel >= 2 ? 1 : 0;
+    f.descriptive_names = Math.min(safe([...names].filter((n) => n.length >= 8 && (/_/.test(n) || /[a-z][A-Z]/.test(n))).length, Math.max(names.size, 1)) * 3, 1);
+    f.long_names = Math.min(safe([...names].filter((n) => n.length >= 14).length, Math.max(names.size, 1)) * 4, 1);
+    f.generic_names = Math.min(safe(idents.filter((i) => GENERIC.has(i.toLowerCase())).length, Math.max(idents.length, 1)) * 10, 1);
+    f.terse_names = Math.min(safe([...names].filter((n) => n.length <= 3).length, Math.max(names.size, 1)) * 2, 1);
+    return { lang, f, codeLines: codeLines.length };
+  }
+
+  function predict(model, srcIn, langIn) {
+    const { lang, f, codeLines } = features(srcIn, langIn);
+    const short = codeLines < 8;
+    model = model.full ? (short ? model.short : model.full) : model;
+    let z = model.b;
+    const contrib = [];
+    model.keys.forEach((k, i) => {
+      const c = model.w[i] * (((f[k] || 0) - model.mu[i]) / model.sd[i]);
+      z += c;
+      contrib.push([k, c]);
+    });
+    const p = 1 / (1 + Math.exp(-Math.max(-30, Math.min(30, z))));
+    return { p, lang, codeLines, short, contrib: contrib.sort((a, b) => Math.abs(b[1]) - Math.abs(a[1])) };
+  }
+
+  const api = { features, predict, detectLang, normLang };
+  if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.AICD = api;
+})(typeof self !== 'undefined' ? self : this);
+</script>
+<script>
+const MODEL = {"full":{"keys":["ai_phrases","allman_brace","blank_ratio","broad_catch","comma_nospace","comment_capitalized","comment_period","comment_ratio","commented_code","debug_prints","descriptive_names","dividers","doc_coverage","doc_tags","double_quotes","em_dash","emoji","error_strings","generic_names","human_markers","ident_len_mean","indent2","indent4","inline_comment_ratio","line_len_cv","line_len_mean","long_names","main_guard","max_line_over100","naming_mixed","no_comments","non_ascii","oneliner_block","py_hints","restating_ratio","semicolon_stack","semis_present","single_letter","sloppy_spacing","spaced_ops","step_comments","tab_indent","tab_space_mix","terse_names","trailing_ws","try_exc_msg","try_per_func","type_annotations"],"mu":[0.019466185029098963,0.2185430463576159,0.12086152486966034,0.030704394942805538,0.027694160144491272,0.3709310408039954,0.2593569245405595,0.3082446701324669,0.02187437286775034,0.03311258278145692,0.7762393679803835,0.010836845273931367,0.3097340698635099,0.1053582179409994,0.5865647685120623,0.0006020469596628537,0.002408187838651415,0.00963275135460566,0.23677549525085922,0.023680513746738914,0.39042699061191044,0.8557191092398643,0.7370627515775258,0.008473621313418922,0.6771284552422469,0.308055171913819,0.5274172871573028,0.062010836845273934,0.2498494882600843,0.03190848886213125,0.3016255267910897,0.010836845273931367,0.39434075857916917,0.007826610475617099,0.09026498677908788,0.32390126429861527,0.21517190941322772,0.25860167320212485,0.060080884954602266,0.7543648404575557,0.0012040939193257074,0.09512341962673089,0.004214328717639976,0.2920719270940972,0.04039680046771701,0.009030704394942806,0.08807595174241775,0.526791089704997],"sd":[0.08433983390358182,0.4132577685251077,0.06933275343132314,0.17251560820401818,0.16409507499733755,0.3740019223083329,0.32096412778158134,0.4789729892205914,0.1132847696332307,0.12023492276718789,0.3023528370260606,0.10353457421769963,0.4408298319763256,0.30701443590375066,0.3544999986194423,0.024529258022232152,0.049014166013359436,0.06419921198099242,0.3653389539758465,0.10776808746194719,0.14324965933878378,0.23398422685038128,0.297535347173789,0.03463994200589362,0.16376906185953696,0.102470544167295,0.3948987746619192,0.24117523288892068,0.43292576901387825,0.17575647129100475,0.4589635806674463,0.10353457421770004,0.4887086296581766,0.08812124967384546,0.19708226406310472,0.467962856735845,0.24071064262318248,0.3674387156922612,0.20930395124325646,0.4304631551468698,0.03467915911839765,0.2933853347821727,0.06478092428407861,0.24751948428170598,0.18567561182460884,0.09459995123187812,0.345334358362377,0.4992817215885378],"w":[0.4746806699489066,-0.13882238234298686,0.33773060046140396,0.09064036375471587,0.1720904184319481,0.5040548663403654,0.16233861478321854,-0.70170275091711,-0.04805992333666155,0.567281119765296,-0.2107530252782636,-0.1402474902003047,-0.08973706554614892,0.019351274743519893,-0.04535556911856443,-0.05202238667070327,-0.06867947329918948,0.01564530060416482,0.26550853842139305,-0.18360137707213167,0.0954157281490019,0.2828396090295274,0.6533674224990912,0.21525175415119277,0.384891490850806,-0.7357609648895322,-0.808232597140006,0.44280249204236966,-0.5060297612045657,-0.12426546294908858,0.6884553928049011,-0.12396881005686501,0.10055387320497411,0.09624430836439873,0.21770931319543577,-0.14625368323083232,0.22119780793927962,0.0042683001541509655,-0.07623448972950748,0.3131533345969724,-0.06823636401042463,-0.22142154296591296,-0.1294390703293391,0.43800056351305666,0.49927957276919166,0.18379179978353635,0.32356830855009167,0.011873318007602983],"b":-2.406224187230803},"short":{"keys":["ai_phrases","allman_brace","blank_ratio","broad_catch","comma_nospace","comment_capitalized","comment_period","comment_ratio","commented_code","debug_prints","descriptive_names","dividers","doc_coverage","doc_tags","double_quotes","em_dash","emoji","error_strings","generic_names","human_markers","ident_len_mean","indent2","indent4","inline_comment_ratio","line_len_cv","line_len_mean","long_names","main_guard","max_line_over100","naming_mixed","no_comments","non_ascii","oneliner_block","py_hints","restating_ratio","semicolon_stack","semis_present","single_letter","sloppy_spacing","spaced_ops","step_comments","tab_indent","tab_space_mix","terse_names","trailing_ws","try_exc_msg","try_per_func","type_annotations"],"mu":[0.0030543677458766036,0.06841783750763591,0,0.0030543677458766036,0.006108735491753207,0.12436367338627567,0.07475055996742007,0.20160863367949491,0.0034616167786601505,0.003461616778660151,0.511824666157236,0.0012217470983506415,0.05192425167990226,0.0177153329260843,0.5357252736653437,0.0006108735491753207,0,0.0009163103237629811,0.13303757533274674,0.0020362451639177356,0.33809599766906173,0.8333231521075138,0.7246080228059464,0.0070148645896966,0.6330596368193516,0.3113379827597907,0.3168570168540077,0.006719609040928528,0.07574832009773977,0.0012217470983506415,0.7910812461820403,0.0012217470983506415,0.0855222968845449,0.0012217470983506415,0.034463449399307684,0.09773976786805132,0.1764508246792914,0.16856206262133036,0.02349826919161067,0.4575442883323152,0,0.08185705558949298,0.0012217470983506415,0.2969611896530537,0.00855222968845449,0.0012217470983506415,0.014966401954795358,0.5235186316432499],"sd":[0.023101288882896216,0.25246155552562294,1,0.05518186824990247,0.07791930981756166,0.30758496184248746,0.23754771151334084,0.4996372046574062,0.04423106978582155,0.033791855066437476,0.45668686003816505,0.034932140392170956,0.22187411693882397,0.13191474483697013,0.23247231858525896,0.02470830594521232,1,0.015107546337222099,0.3319763991567746,0.02597310327252052,0.2078665388457063,0.2957116173759691,0.35240693950331214,0.06009252902006552,0.19080248226019803,0.1612177605068597,0.4288958417730736,0.08169734325708428,0.26459499636257683,0.03493214039217103,0.406536232236572,0.03493214039217109,0.279657350377448,0.03493214039217122,0.16491415889798472,0.2969624650442395,0.2983958006859351,0.34966856373795846,0.14832371787335719,0.49819425182030835,1,0.27414681840158206,0.034932140392171074,0.3531015256155578,0.09208196922204799,0.034932140392170886,0.13051124310468387,0.4994465676783028],"w":[0.21139919068521998,-0.2009233404444706,0,-0.020149773473849306,0.09911747045460897,0.3496137928350349,-0.18380836266665423,-0.5446793757058693,-0.1998958451274083,0.1947236271535341,-0.051827669155859894,-0.05018639728152051,0.12276249873664154,-0.31316103204534584,0.0999398494900956,-0.03325674466082132,0,0.10671444555561062,0.17495867483986605,0.1177898525052177,0.051144124694240074,0.284383423949311,0.13407504589203928,0.2024347017461666,0.10717048073266254,-0.40357878196162644,-0.683268919110142,0.09875026243780324,-0.5669462847652461,-0.12897100141511153,0.4356978532618008,-0.028570028440778373,0.15625983261082171,0.09374137566236984,0.2981589663816357,0.032632931159854224,-0.049870630026750226,0.1370719840340655,0.001441860959056497,0.14424539805273798,0,-0.15530552145968773,-0.018335573811720678,0.15717342217772354,0.23937701843036507,0.07840020403838278,0.11642979021177699,-0.08531348496324649],"b":-0.8659768527515996},"trained_on":{"human":1449,"ai":212}};
+const SAMPLES = {"human":"\n// ContainsAny reports whether any Unicode code points in chars are within s.\nfunc ContainsAny(s, chars string) bool {\n\treturn IndexAny(s, chars) >= 0\n}\n\n// ContainsRune reports whether the Unicode code point r is within s.\nfunc ContainsRune(s string, r rune) bool {\n\treturn IndexRune(s, r) >= 0\n}\n\n// LastIndex returns the index of the last instance of substr in s, or -1 if substr is not present in s.\nfunc LastIndex(s, substr string) int {\n\tn := len(substr)\n\tswitch {\n\tcase n == 0:\n\t\treturn len(s)\n\tcase n == 1:\n\t\treturn LastIndexByte(s, substr[0])\n\tcase n == len(s):\n\t\tif substr == s {\n\t\t\treturn 0\n\t\t}\n\t\treturn -1\n\tcase n > len(s):\n\t\treturn -1\n\t}\n\t// Rabin-Karp search from the end of the string\n\thashss, pow := hashStrRev(substr)\n\tlast := len(s) - n\n","ai":"class LRUCache {\n  constructor(capacity) {\n    this.capacity = capacity;\n    this.map = new Map();\n  }\n\n  get(key) {\n    if (!this.map.has(key)) return undefined;\n    const value = this.map.get(key);\n    // Re-insert to mark as most recently used\n    this.map.delete(key);\n    this.map.set(key, value);\n    return value;\n  }\n\n  put(key, value) {\n    if (this.map.has(key)) {\n      this.map.delete(key);\n    } else if (this.map.size >= this.capacity) {\n      // Map iterates in insertion order, so the first key is the least recently used\n      const oldest = this.map.keys().next().value;\n      this.map.delete(oldest);\n    }\n    this.map.set(key, value);\n  }\n}\n\nconst cache = new LRUCache(2);\ncache.put('a', 1);\ncache.put('b', 2);\ncache.get('a');\ncache.put('c', 3);\nconsole.log(cache.get('b')); // undefined\n"};
+const LABEL = {
+  comment_ratio: 'Amount of commenting', restating_ratio: 'Comments that narrate the next line', comment_capitalized: 'Every comment starts with a capital',
+  comment_period: 'Comments end with a full stop', no_comments: 'No comments at all', dividers: 'Section divider comments', step_comments: '"Step N" comments',
+  ai_phrases: 'Assistant-style wording', human_markers: 'TODO, hack or slang markers', emoji: 'Emoji', em_dash: 'Em dash character', non_ascii: 'Non-ASCII characters',
+  commented_code: 'Commented-out code', debug_prints: 'Print or log statements', doc_coverage: 'Doc comments on functions', doc_tags: 'Param and returns tags',
+  func_count: 'Number of functions', try_per_func: 'Error handling per function', broad_catch: 'Broad catch of any error', main_guard: 'Entry-point boilerplate',
+  error_strings: 'Descriptive error messages', type_annotations: 'Statically typed language', py_hints: 'Full Python type hints', try_exc_msg: 'Error text interpolated into messages',
+  line_len_cv: 'Evenness of line lengths', line_len_mean: 'Average line length', max_line_over100: 'Lines over 100 characters', trailing_ws: 'Trailing whitespace',
+  tab_indent: 'Tab indentation', tab_space_mix: 'Tabs and spaces mixed', blank_ratio: 'Blank-line density', double_quotes: 'Double-quote preference',
+  allman_brace: 'Braces on their own line', indent4: 'Four-space indent steps', indent2: 'Two-space indent steps', sloppy_spacing: 'Tight or uneven operator spacing',
+  comma_nospace: 'Missing space after commas', spaced_ops: 'Consistently spaced operators', semicolon_stack: 'Several statements on one line', oneliner_block: 'One-line if/for bodies',
+  semis_present: 'Semicolon use', ident_len_mean: 'Length of identifiers', single_letter: 'Single-letter names', naming_mixed: 'Mixed snake_case and camelCase',
+  descriptive_names: 'Descriptive multi-word names', long_names: 'Very long names', generic_names: 'Generic names like data or result', terse_names: 'Terse names', log_lines: 'Length of the snippet', inline_comment_ratio: 'Trailing comments on code lines'
+};
+const $ = (id) => document.getElementById(id);
+const code = $('code');
+let timer;
+
+function run() {
+  const src = code.value;
+  if (!src.trim()) { $('pct').textContent = '--'; $('verdict').textContent = 'Paste some code'; $('sub').textContent = ''; $('ev').innerHTML = ''; $('warn').hidden = true; $('note').textContent = ''; return; }
+  const r = AICD.predict(MODEL, src, $('lang').value);
+  const short = r.short;
+  const p = r.p;
+  const pct = Math.round(p * 100);
+  $('pct').textContent = pct + '%';
+  $('needle').style.left = 'calc(' + pct + '% - 1px)';
+  const word = short ? (p >= 0.6 ? 'Leans AI' : p <= 0.4 ? 'Leans human' : 'Too close to call')
+    : p >= 0.85 ? 'Very likely AI' : p >= 0.65 ? 'Likely AI' : p > 0.35 ? 'Unclear' : p > 0.15 ? 'Likely human' : 'Very likely human';
+  $('verdict').textContent = word;
+  $('sub').textContent = 'chance this was written by an AI model';
+  const w = $('warn');
+  if (short) { w.hidden = false; w.textContent = 'Only ' + r.codeLines + ' line' + (r.codeLines === 1 ? '' : 's') + ' of code. A few lines carry little style, so treat this as a lean. Paste a whole function or file for a firmer reading.'; } else w.hidden = true;
+  const top = r.contrib.filter(([, c]) => Math.abs(c) > 0.12).slice(0, 7);
+  const max = Math.max(...top.map(([, c]) => Math.abs(c)), 0.5);
+  $('ev').innerHTML = top.map(([k, c]) => {
+    const wd = Math.min(Math.abs(c) / max, 1) * 50;
+    const bar = c > 0 ? '<i style="left:50%;width:' + wd + '%"></i>' : '<i class="h" style="right:50%;width:' + wd + '%"></i>';
+    return '<li><span>' + (LABEL[k] || k) + '</span><div class="bar" title="' + (c > 0 ? 'points to AI' : 'points to human') + '">' + bar + '</div></li>';
+  }).join('') || '<li><span>No strong signals either way.</span></li>';
+  const names = { py: 'Python', js: 'JavaScript', ts: 'TypeScript', java: 'Java', go: 'Go', rs: 'Rust', c: 'C', cpp: 'C++', cs: 'C#', rb: 'Ruby', php: 'PHP', kt: 'Kotlin', swift: 'Swift' };
+  $('note').textContent = 'Read as ' + (names[r.lang] || 'unknown language') + ', ' + r.codeLines + ' code line' + (r.codeLines === 1 ? '' : 's') + '. Bars to the right point to AI, to the left to human.';
+}
+function schedule() { clearTimeout(timer); timer = setTimeout(run, 120); }
+code.addEventListener('input', schedule);
+$('lang').addEventListener('change', run);
+$('s-human').onclick = () => { $('lang').value = 'go'; code.value = SAMPLES.human; run(); };
+$('s-ai').onclick = () => { $('lang').value = 'js'; code.value = SAMPLES.ai; run(); };
+$('foot').innerHTML = 'Trained on <b>' + MODEL.trained_on.human + '</b> chunks of human code from release tags dated before 2020 (Node, CPython, Go, Rust, TypeScript, Redis, Rails, Laravel, Kotlin, .NET, Guava, Commons Lang) and <b>' + MODEL.trained_on.ai + '</b> answers written by Claude and Qwen models. On files the model had not seen, it labelled <b>92%</b> of the human code correctly and caught <b>90%</b> of the AI code. For snippets under 8 lines it uses a separate model that gets about <b>72%</b> right, which is why short input only gets a lean. That is a style estimate, not proof of who wrote something. Heavily edited AI code and formatter-cleaned human code can fool it, and it has seen few answers from GPT or Gemini.';
+$('s-ai').click();
+</script>
